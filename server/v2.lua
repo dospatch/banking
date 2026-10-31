@@ -376,3 +376,9 @@ QBCore.Functions.CreateCallback('bc-banking:server:v2:audit', function(src, cb)
     }) or {}
     cb(v2Result(true, nil, { rows = rows }))
 end)
+
+
+AddEventHandler('playerDropped', function()
+    v2LastUse[source] = nil
+    v2TransferBusy[source] = nil
+end)
