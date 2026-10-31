@@ -2,6 +2,7 @@ local QBCore = exports['qb-core']:GetCoreObject()
 
 
 local v2LastUse = {}
+local v2TransferBusy = {}
 
 local function checkAccess(src, coords, useCooldown)
     if type(coords) ~= 'table' or type(coords.x) ~= 'number' or type(coords.y) ~= 'number' or type(coords.z) ~= 'number' then
@@ -83,7 +84,10 @@ local function businessPermission(Player, account, permission)
         'SELECT can_view, can_deposit, can_withdraw, can_manage FROM bc_banking_account_members WHERE account_id = ? AND citizenid = ? LIMIT 1',
         { account.id, cid }
     )
-    if member then return tonumber(member['can_' .. permission]) == 1 end
+    if member then
+        if tonumber(member.can_view) ~= 1 then return false end
+        return tonumber(member['can_' .. permission]) == 1
+    end
     if permission == 'view' or permission == 'deposit' then return true end
     if permission == 'withdraw' then return grade >= (rule.withdrawGrade or rule.manageGrade or 999) end
     if permission == 'manage' then return false end
@@ -280,7 +284,10 @@ QBCore.Functions.CreateCallback('bc-banking:server:v2:lockCard', function(src, c
 end)
 
 QBCore.Functions.CreateCallback('bc-banking:server:v2:offlineTransfer', function(src, cb, data, coords)
-    if not Config.V2.EnableOfflineTransfers then cb(v2Result(false, 'Offline transfers are disabled.')); return end
+    if v2TransferBusy[src] then finish(v2Result(false, Config.Text.cooldown)); return end
+    v2TransferBusy[src] = true
+    local function finish(response) v2TransferBusy[src] = nil; cb(response) end
+    if not Config.V2.EnableOfflineTransfers then finish(v2Result(false, 'Offline transfers are disabled.')); return end
     local Player = player(src)
     if not Player then cb(v2Result(false, Config.Text.failed)); return end
     local allowed, message = checkAccess(src, coords, true)
