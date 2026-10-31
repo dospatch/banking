@@ -284,27 +284,32 @@ QBCore.Functions.CreateCallback('bc-banking:server:v2:lockCard', function(src, c
 end)
 
 QBCore.Functions.CreateCallback('bc-banking:server:v2:offlineTransfer', function(src, cb, data, coords)
-    if v2TransferBusy[src] then finish(v2Result(false, Config.Text.cooldown)); return end
+    if v2TransferBusy[src] then cb(v2Result(false, Config.Text.cooldown)); return end
     v2TransferBusy[src] = true
-    local function finish(response) v2TransferBusy[src] = nil; cb(response) end
+    local function finish(response)
+        v2TransferBusy[src] = nil
+        cb(response)
+    end
     if not Config.V2.EnableOfflineTransfers then finish(v2Result(false, 'Offline transfers are disabled.')); return end
     local Player = player(src)
-    if not Player then cb(v2Result(false, Config.Text.failed)); return end
+    if not Player then finish(v2Result(false, Config.Text.failed)); return end
     local allowed, message = checkAccess(src, coords, true)
-    if not allowed then cb(v2Result(false, message)); return end
+    if not allowed then finish(v2Result(false, message)); return end
     local amount = validAmount(data and data.amount, Config.V2.OfflineTransferMaximum)
     local targetCid = type(data and data.citizenid) == 'string' and data.citizenid:match('^[%w%-]+$') or nil
-    if not amount then cb(v2Result(false, Config.Text.invalidAmount)); return end
+    if not amount then finish(v2Result(false, Config.Text.invalidAmount)); return end
     if not targetCid or #targetCid < 3 or #targetCid > 50 or targetCid == citizenId(Player) then
-        cb(v2Result(false, Config.Text.invalidCitizenId)); return
+        finish(v2Result(false, Config.Text.invalidCitizenId)); return
     end
     local fee = math.max(0, math.floor(tonumber(Config.V2.OfflineTransferFee) or 0))
-    if Player.Functions.GetMoney('bank') < amount + fee then cb(v2Result(false, Config.Text.insufficientFunds)); return end
+    if Player.Functions.GetMoney('bank') < amount + fee then finish(v2Result(false, Config.Text.insufficientFunds)); return end
 
     local onlineRecipient = QBCore.Functions.GetPlayerByCitizenId(targetCid)
     local offlineExists = not onlineRecipient and MySQL.scalar.await('SELECT citizenid FROM players WHERE citizenid = ? LIMIT 1', { targetCid })
-    if not onlineRecipient and not offlineExists then cb(v2Result(false, Config.Text.invalidCitizenId)); return end
-    if not Player.Functions.RemoveMoney('bank', amount + fee, 'bc-banking-offline-transfer') then cb(v2Result(false, Config.Text.failed)); return end
+    if not onlineRecipient and not offlineExists then finish(v2Result(false, Config.Text.invalidCitizenId)); return end
+    if not Player.Functions.RemoveMoney('bank', amount + fee, 'bc-banking-offline-transfer') then
+        finish(v2Result(false, Config.Text.failed)); return
+    end
 
     local recipientBalance
     local success = true
@@ -323,7 +328,7 @@ QBCore.Functions.CreateCallback('bc-banking:server:v2:offlineTransfer', function
 
     if not success then
         Player.Functions.AddMoney('bank', amount + fee, 'bc-banking-transfer-refund')
-        cb(v2Result(false, Config.Text.failed)); return
+        finish(v2Result(false, Config.Text.failed)); return
     end
 
     local senderBalance = Player.Functions.GetMoney('bank')
@@ -336,7 +341,7 @@ QBCore.Functions.CreateCallback('bc-banking:server:v2:offlineTransfer', function
         })
     end
     audit(citizenId(Player), nil, 'offline_transfer', amount, 'To ' .. targetCid)
-    cb(v2Result(true, 'Transfer completed.', { bank = senderBalance, cash = Player.Functions.GetMoney('cash') }))
+    finish(v2Result(true, 'Transfer completed.', { bank = senderBalance, cash = Player.Functions.GetMoney('cash') }))
 end)
 
 QBCore.Functions.CreateCallback('bc-banking:server:v2:tellerOpen', function(src, cb)
