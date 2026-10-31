@@ -1,5 +1,34 @@
 local QBCore = exports['qb-core']:GetCoreObject()
 
+
+local v2LastUse = {}
+
+local function checkAccess(src, coords, useCooldown)
+    if type(coords) ~= 'table' or type(coords.x) ~= 'number' or type(coords.y) ~= 'number' or type(coords.z) ~= 'number' then
+        return false, Config.Text.tooFar
+    end
+    local ped = GetPlayerPed(src)
+    if not ped or ped <= 0 then return false, Config.Text.tooFar end
+    local pos = GetEntityCoords(ped)
+    if #(pos - vector3(coords.x, coords.y, coords.z)) > Config.InteractionDistance then
+        return false, Config.Text.tooFar
+    end
+    if useCooldown then
+        local now = GetGameTimer()
+        if v2LastUse[src] and now - v2LastUse[src] < Config.CooldownMs then
+            return false, Config.Text.cooldown
+        end
+        v2LastUse[src] = now
+    end
+    return true
+end
+
+local function addHistory(cid, txType, amount, description, balanceAfter)
+    MySQL.insert('INSERT INTO bc_banking_transactions (citizenid, transaction_type, amount, description, balance_after) VALUES (?, ?, ?, ?, ?)', {
+        cid, txType, amount, description, balanceAfter
+    })
+end
+
 local function v2Result(ok, message, data)
     return { ok = ok, message = message, data = data }
 end
@@ -214,6 +243,27 @@ QBCore.Functions.CreateCallback('bc-banking:server:v2:changePin', function(src, 
     MySQL.update.await('UPDATE bc_banking_cards SET pin_salt = ?, pin_hash = ?, failed_attempts = 0, locked_until = NULL WHERE citizenid = ?', { salt, hash, cid })
     audit(cid, nil, 'card_pin_changed', 0, 'PIN changed')
     cb(v2Result(true, 'Debit card PIN updated.'))
+end)
+
+QBCore.Functions.CreateCallback('bc-banking:server:v2:verifyPin', function(src, cb, data)
+    local Player = player(src)
+    local cid = citizenId(Player)
+    local pin = tostring(data and data.pin or '')
+    local card = cid and MySQL.single.await('SELECT * FROM bc_banking_cards WHERE citizenid = ? LIMIT 1', { cid })
+    if not card then cb(v2Result(false, 'No debit card found.')); return end
+    if tonumber(card.is_locked) == 1 then cb(v2Result(false, 'Your debit card is locked.')); return end
+    if card.locked_until and tostring(card.locked_until) > os.date('%Y-%m-%d %H:%M:%S') then
+        cb(v2Result(false, 'Your card is temporarily locked.')); return
+    end
+    if pinHash(pin, card.pin_salt) ~= card.pin_hash then
+        local attempts = (tonumber(card.failed_attempts) or 0) + 1
+        local lockUntil = attempts >= Config.V2.CardMaxFailedAttempts and os.date('%Y-%m-%d %H:%M:%S', os.time() + Config.V2.CardLockMinutes * 60) or nil
+        MySQL.update.await('UPDATE bc_banking_cards SET failed_attempts = ?, locked_until = ? WHERE citizenid = ?', { attempts, lockUntil, cid })
+        audit(cid, nil, 'card_pin_failed', 0, 'Failed PIN attempt')
+        cb(v2Result(false, 'Incorrect PIN.')); return
+    end
+    MySQL.update.await('UPDATE bc_banking_cards SET failed_attempts = 0, locked_until = NULL WHERE citizenid = ?', { cid })
+    cb(v2Result(true, 'PIN verified.'))
 end)
 
 QBCore.Functions.CreateCallback('bc-banking:server:v2:lockCard', function(src, cb, data)
