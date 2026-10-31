@@ -63,6 +63,12 @@ RegisterNUICallback('transfer', function(data, cb)
     end, data, currentAtm)
 end)
 
+RegisterNUICallback('offlineTransfer', function(data, cb)
+    QBCore.Functions.TriggerCallback('bc-banking:server:v2:offlineTransfer', function(result)
+        cb(result or { ok = false, message = Config.Text.failed })
+    end, data, currentAtm)
+end)
+
 RegisterCommand('bank', function()
     notify('Use an ATM to access BC Banking.', 'primary')
 end, false)
@@ -77,6 +83,14 @@ CreateThread(function()
         }},
         distance = Config.TargetDistance
     })
+end)
+
+RegisterNetEvent('bc-banking:client:openTellerUI', function(data, coords)
+    if uiOpen then closeBank() end
+    currentAtm = coords
+    uiOpen = true
+    SetNuiFocus(true, true)
+    SendNUIMessage({ action = 'open', data = data, brand = Config.Brand, teller = true })
 end)
 
 RegisterNetEvent('QBCore:Client:OnPlayerUnload', closeBank)
