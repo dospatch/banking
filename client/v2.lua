@@ -50,8 +50,13 @@ RegisterNetEvent('bc-banking:client:tellerOpen', function()
             notify(result and result.message or 'Unable to access teller.', 'error')
             return
         end
-        SetNuiFocus(true, true)
-        SendNUIMessage({ action = 'open', data = result.data, brand = Config.Brand, teller = true })
+        local pedCoords = GetEntityCoords(PlayerPedId())
+        local nearest, nearestDistance
+        for _, teller in ipairs(Config.V2.TellerLocations or {}) do
+            local distance = #(pedCoords - teller.coords)
+            if not nearestDistance or distance < nearestDistance then nearest, nearestDistance = teller.coords, distance end
+        end
+        if nearest then TriggerEvent('bc-banking:client:openTellerUI', result.data, { x = nearest.x, y = nearest.y, z = nearest.z }) end
     end)
 end)
 
