@@ -4,14 +4,15 @@ lua54 'yes'
 
 name 'bc-banking'
 author 'BC-GAMING'
-description 'BC-Banking V1 - QBCore ATM banking with modern NUI and transaction history'
-version '1.0.0'
+description 'BC-Banking V2 - QBCore personal and business banking, cards and transfers'
+version '2.0.0'
 
 ui_page 'html/index.html'
 
 shared_scripts {
     'config/config.lua',
-    'shared/main.lua'
+    'shared/main.lua',
+    'config/v2.lua'
 }
 
 client_scripts {
@@ -20,7 +21,8 @@ client_scripts {
 
 server_scripts {
     '@oxmysql/lib/MySQL.lua',
-    'server/main.lua'
+    'server/main.lua',
+    'server/v2.lua'
 }
 
 files {
