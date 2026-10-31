@@ -63,6 +63,12 @@ RegisterNUICallback('transfer', function(data, cb)
     end, data, currentAtm)
 end)
 
+RegisterNUICallback('offlineTransfer', function(data, cb)
+    QBCore.Functions.TriggerCallback('bc-banking:server:v2:offlineTransfer', function(result)
+        cb(result or { ok = false, message = Config.Text.failed })
+    end, data, currentAtm)
+end)
+
 RegisterCommand('bank', function()
     notify('Use an ATM to access BC Banking.', 'primary')
 end, false)
