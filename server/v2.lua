@@ -77,6 +77,8 @@ local function businessPermission(Player, account, permission)
     local job, rule, grade = jobAccess(Player)
     if not cid or not account or not job or account.job_name ~= job.name then return false end
 
+    if permission == 'manage' and grade >= (rule.manageGrade or 999) then return true end
+    if grade >= (rule.manageGrade or 999) then return true end
     local member = MySQL.single.await(
         'SELECT can_view, can_deposit, can_withdraw, can_manage FROM bc_banking_account_members WHERE account_id = ? AND citizenid = ? LIMIT 1',
         { account.id, cid }
@@ -84,7 +86,7 @@ local function businessPermission(Player, account, permission)
     if member then return tonumber(member['can_' .. permission]) == 1 end
     if permission == 'view' or permission == 'deposit' then return true end
     if permission == 'withdraw' then return grade >= (rule.withdrawGrade or rule.manageGrade or 999) end
-    if permission == 'manage' then return grade >= (rule.manageGrade or 999) end
+    if permission == 'manage' then return false end
     return false
 end
 
