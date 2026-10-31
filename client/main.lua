@@ -85,6 +85,14 @@ CreateThread(function()
     })
 end)
 
+RegisterNetEvent('bc-banking:client:openTellerUI', function(data, coords)
+    if uiOpen then closeBank() end
+    currentAtm = coords
+    uiOpen = true
+    SetNuiFocus(true, true)
+    SendNUIMessage({ action = 'open', data = data, brand = Config.Brand, teller = true })
+end)
+
 RegisterNetEvent('QBCore:Client:OnPlayerUnload', closeBank)
 AddEventHandler('onResourceStop', function(resource)
     if resource == GetCurrentResourceName() then closeBank() end
