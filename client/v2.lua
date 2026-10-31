@@ -40,10 +40,6 @@ RegisterNUICallback('v2LockCard', function(data, cb)
     serverCallback('bc-banking:server:v2:lockCard', data, function(result) cb(result or { ok = false }) end)
 end)
 
-RegisterNUICallback('offlineTransfer', function(data, cb)
-    serverCallback('bc-banking:server:v2:offlineTransfer', data, function(result) cb(result or { ok = false }) end, currentAtm)
-end)
-
 RegisterNUICallback('v2Audit', function(_, cb)
     serverCallback('bc-banking:server:v2:audit', nil, function(result) cb(result or { ok = false }) end)
 end)
