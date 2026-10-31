@@ -15,7 +15,11 @@ Config.V2 = {
     -- Adjust job names and grades to match your server's qb-core/shared/jobs.lua.
     BusinessJobs = {
         police = { label = 'Police Department', minGrade = 0, manageGrade = 4 },
+        lspd = { label = 'Los Santos Police Department', minGrade = 0, manageGrade = 4 },
+        bcso = { label = 'Blaine County Sheriff Office', minGrade = 0, manageGrade = 4 },
+        sast = { label = 'San Andreas State Troopers', minGrade = 0, manageGrade = 4 },
         ambulance = { label = 'Emergency Medical Services', minGrade = 0, manageGrade = 3 },
+        safr = { label = 'San Andreas Fire Rescue', minGrade = 0, manageGrade = 3 },
         mechanic = { label = 'Mechanic Shop', minGrade = 0, manageGrade = 3 }
     },
 
