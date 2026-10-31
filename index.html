@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BC Banking</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main id="app" class="hidden">
+    <section class="bank-window">
+      <aside class="sidebar">
+        <div class="brand-mark"><span class="brand-icon">BC</span><div><strong id="brandName">BC BANK</strong><small>SECURE BANKING</small></div></div>
+        <div class="side-label">YOUR BANK</div>
+        <button class="nav active" data-view="overview"><span>▦</span> Overview</button>
+        <button class="nav" data-view="activity"><span>↕</span> Transactions</button>
+        <div class="sidebar-bottom"><div class="secure"><span class="secure-dot"></span><div><b>Connection secure</b><small>Protected session</small></div></div><button id="closeBtn" class="close-side">✕ &nbsp; Close banking</button></div>
+      </aside>
+      <section class="content">
+        <header class="topbar"><div><div class="eyebrow">PERSONAL BANKING</div><h1 id="greeting">Welcome back</h1></div><div class="profile"><div class="avatar" id="avatar">BC</div><div><b id="playerName">Account holder</b><small id="citizenId">Citizen ID</small></div><span class="status-dot"></span></div></header>
+        <section id="overviewView" class="view">
+          <div class="balance-card"><div class="balance-top"><div><span class="muted-light">TOTAL AVAILABLE BALANCE</span><div class="balance" id="bankBalance">$0</div></div><div class="card-chip">BC <span>V1</span></div></div><div class="card-bottom"><div><small>ACCOUNT HOLDER</small><b id="cardName">ACCOUNT HOLDER</b></div><div><small>ACCOUNT TYPE</small><b>PERSONAL CHECKING</b></div><div class="card-number"><small>ACCOUNT</small><b id="cardId">•••• ••••</b></div></div></div>
+          <div class="quick-grid"><button class="quick-action" data-action="deposit"><span class="quick-icon">↓</span><b>Deposit</b><small>Cash to bank</small></button><button class="quick-action" data-action="withdraw"><span class="quick-icon">↑</span><b>Withdraw</b><small>Bank to cash</small></button><button class="quick-action" data-action="transfer"><span class="quick-icon">⇄</span><b>Transfer</b><small>Send to citizen</small></button><button class="quick-action" id="refreshBtn"><span class="quick-icon">⟳</span><b>Refresh</b><small>Update balance</small></button></div>
+          <div class="lower-grid"><div class="panel"><div class="panel-head"><div><h2>Recent activity</h2><p>Your latest account movements</p></div><button class="text-btn" data-view="activity">View all →</button></div><div id="recentList" class="transactions"></div></div><div class="panel cash-panel"><div class="panel-head"><div><h2>Cash wallet</h2><p>Available physical cash</p></div><span class="wallet-icon">◈</span></div><div id="cashBalance" class="cash-value">$0</div><div class="wallet-note"><span class="secure-dot"></span> Ready for ATM transactions</div><div class="fee-note" id="feeNote">No hidden account fees</div></div></div>
+        </section>
+        <section id="activityView" class="view hidden"><div class="panel activity-panel"><div class="panel-head"><div><h2>Transaction history</h2><p>A record of your latest deposits, withdrawals and transfers</p></div><button class="outline-btn" id="activityRefresh">↻ Refresh</button></div><div id="allList" class="transactions full-list"></div></div></section>
+        <footer>BC BANKING <span>•</span> V1.0 <span>•</span> SECURE DIGITAL BANKING</footer>
+      </section>
+      <div id="modal" class="modal hidden"><div class="modal-card"><button id="modalClose" class="modal-x">✕</button><div class="modal-symbol" id="modalSymbol">↓</div><div class="eyebrow">ACCOUNT SERVICE</div><h2 id="modalTitle">Deposit cash</h2><p id="modalDescription">Move physical cash into your bank account.</p><form id="transactionForm"><div id="citizenField" class="field hidden"><label>RECIPIENT CITIZEN ID</label><input id="citizenInput" autocomplete="off" placeholder="Enter citizen ID" /></div><div class="field"><label>AMOUNT ($)</label><input id="amountInput" type="number" min="1" step="1" placeholder="0.00" required /></div><div class="modal-fee" id="modalFee"></div><button class="submit-btn" id="submitBtn" type="submit">Confirm transaction</button></form><div id="modalMessage" class="modal-message"></div></div></div>
+      <div id="toast" class="toast"></div>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
