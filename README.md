@@ -1,67 +1,60 @@
-# BC-Banking V1
+# BC-Banking V2.0.0
 
-A modern dark-and-orange QBCore ATM banking resource with a custom NUI dashboard, personal account overview, deposits, withdrawals, online citizen-ID transfers, and persistent transaction history.
+BC-Banking V2 is a QBCore banking resource with a custom BC BANK NUI, personal ATM banking, shared job accounts, debit card controls, offline transfers, configured teller locations, employee permissions and audit history.
 
-## V1 features
+## V2 features
 
-- BC-BANK branded responsive NUI dashboard.
-- Bank and cash balances.
-- Deposit cash and withdraw cash.
-- Transfer money to another online citizen by citizen ID.
-- Recent activity and transaction history stored in MySQL.
-- Configurable transaction limits, cooldown, ATM range and optional fees.
-- Server-side amount checks, ATM-distance checks, per-player transaction lock and recipient validation.
-- Uses QBCore money functions, so balances remain part of the normal QBCore player account.
+- Personal deposits, withdrawals and online transfers (V1 core).
+- Offline citizen-ID transfers to existing QBCore player accounts.
+- Shared job/business accounts with separate balances.
+- Grade-based department access and manager-controlled employee permissions.
+- Debit card issuing, card locking/unlocking and PIN changes.
+- Salted PIN hashes, failed-attempt tracking and temporary PIN lockouts.
+- Configurable bank teller locations using qb-target.
+- Business-account audit history.
+- Responsive dark-and-orange BC BANK interface.
 
 ## Dependencies
 
-Start these resources before `bc-banking`:
+Start these before `bc-banking`:
 
 - `qb-core`
 - `qb-target`
 - `oxmysql`
 
-This resource intentionally uses its own NUI and does not require `qb-menu` or `qb-input`.
+## Installation and V1 upgrade
 
-## Installation
-
-1. Extract the `bc-banking` folder into your server's resources directory, for example `resources/[qb]/bc-banking`.
-2. Import `sql.sql` into the same database used by your QBCore server. The table is also safe to create manually with the supplied SQL.
-3. Add the following to `server.cfg` after the dependencies:
-
-```cfg
-ensure oxmysql
-ensure qb-core
-ensure qb-target
-ensure bc-banking
-```
-
-4. Restart the server, or run `refresh` then `ensure bc-banking` in the server console.
-5. Walk up to an ATM, use the qb-target eye, and choose **Open BC Banking**.
+1. Back up the server resource folder and database.
+2. Keep a copy of the V1.0.0 release for rollback.
+3. Install this branch as a folder named `bc-banking` in your resources directory.
+4. Confirm the original V1 table exists by importing `sql.sql` if needed.
+5. Import `sql/v2_migration.sql`. It creates V2 tables and does not delete V1 transaction history.
+6. Edit `config/v2.lua` to match your exact job names, grades and teller coordinates.
+7. Ensure dependencies start before this resource:
+   ```cfg
+   ensure oxmysql
+   ensure qb-core
+   ensure qb-target
+   ensure bc-banking
+   ```
+8. Start V2 on a separate staging server first. Do not run two copies named `bc-banking` on the same server.
 
 ## Configuration
 
-Edit `config/config.lua`:
+- `config/config.lua`: ATM models, personal transaction limits, fees and branding.
+- `config/v2.lua`: business job accounts, grade thresholds, debit card rules, offline transfer limits and teller locations.
+- Add your bank teller coordinates to `Config.V2.TellerLocations` as `vector3(x, y, z)` entries. No teller zones are created until you configure at least one location.
+- Business job names must exactly match the names in your QBCore jobs configuration.
 
-- `Config.WithdrawalFee` and `Config.TransferFee` default to `0`.
-- `Config.MaximumTransaction` and `Config.MaximumTransfer` control limits.
-- `Config.InteractionDistance` is checked server-side against the supplied ATM position.
-- `Config.HistoryLimit` controls how many recent transactions are displayed.
-- `Config.AtmModels` controls supported ATM props.
+## Database behavior
 
-## Important V1 scope
+- Personal bank/cash balances remain QBCore-managed.
+- Business account balances are stored in `bc_banking_accounts`.
+- Employee permissions are stored in `bc_banking_account_members`.
+- Card PINs are stored as salted SHA-256 hashes; plaintext PINs are not stored.
+- V2 security events are stored in `bc_banking_v2_audit`.
+- Offline transfers update the standard QBCore `players.money` JSON column. Confirm your server uses that schema before enabling offline transfers.
 
-- Transfers are online-only in V1. The recipient must be connected.
-- This build does not yet include business/shared accounts, debit cards, PIN management, bank tellers, offline transfers, or employee permissions. Those need their own account ownership and authorization model and should be added as a separately tested V1.1/V2 feature set.
-- QBCore's built-in `bank` and `cash` balances remain authoritative. The transaction table is an activity ledger, not a second balance store.
+## Testing status
 
-## Test checklist
-
-1. Confirm the resource starts without missing dependency errors.
-2. Open an ATM and verify player name, citizen ID, bank balance and cash balance.
-3. Deposit a small amount and verify cash decreases and bank increases.
-4. Withdraw a small amount and verify bank decreases and cash increases.
-5. Transfer to a second online player and verify both balances and both activity records.
-6. Try zero, negative, decimal, oversized and insufficient-funds amounts; all should be rejected.
-7. Try opening the UI away from an ATM; the server should reject it.
-8. Restart the resource and verify the transaction history remains in the database.
+V2 has been committed to the `v2-development` branch, but it has not been runtime-tested in a FiveM server. Follow `tests/V2_TEST_PLAN.md` on a staging server before production use. V1.0.0 remains on `main`.
